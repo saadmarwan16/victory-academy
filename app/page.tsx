@@ -484,7 +484,7 @@ export default function Home() {
             </div>
             <div className="reviews-header-actions">
               <div className="reviews-score" aria-label="Google'da 5 üzerinden 4,9 puan">
-                <strong>4,8</strong>
+                <strong>4,9</strong>
                 <span><i aria-hidden="true">★★★★★</i><small>31 değerlendirme</small></span>
               </div>
               <a
