@@ -261,22 +261,44 @@ function GoogleReviewsMarquee() {
 
 export default function Home() {
   const [formStatus, setFormStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleContact(event: FormEvent<HTMLFormElement>) {
+  async function handleContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const name = String(form.get("name") || "");
     const contact = String(form.get("contact") || "");
     const age = String(form.get("age") || "Belirtilmedi");
     const program = String(form.get("program") || "Belirtilmedi");
     const message = String(form.get("message") || "");
-    const subject = encodeURIComponent(`Victory Academy bilgi talebi — ${name}`);
-    const body = encodeURIComponent(
-      `Ad Soyad: ${name}\nİletişim: ${contact}\nÖğrenci yaşı: ${age}\nİlgilenilen program: ${program}\n\nMesaj:\n${message}`,
-    );
 
-    setFormStatus("E-posta uygulamanız açılıyor. Mesajı göndererek talebinizi tamamlayabilirsiniz.");
-    window.location.href = `mailto:gulcan@victoryacademyenglish.com?subject=${subject}&body=${body}`;
+    setIsSubmitting(true);
+    setFormStatus("Talebiniz gönderiliyor...");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, contact, age, program, message }),
+      });
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error || "E-posta gönderilemedi.");
+      }
+
+      formElement.reset();
+      setFormStatus("Talebiniz başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.");
+    } catch (error) {
+      setFormStatus(
+        error instanceof Error
+          ? error.message
+          : "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -618,8 +640,8 @@ export default function Home() {
               <input type="checkbox" required />
               <span>İletişim talebim kapsamında verdiğim bilgilerin kullanılmasını kabul ediyorum.</span>
             </label>
-            <button className="button button-primary form-submit" type="submit">
-              Talebimi Oluştur <ArrowRight aria-hidden="true" />
+            <button className="button button-primary form-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Gönderiliyor..." : "Talebimi Oluştur"} <ArrowRight aria-hidden="true" />
             </button>
             {formStatus && <p className="form-status" role="status">{formStatus}</p>}
           </form>
